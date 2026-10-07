@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Timer & Multi-Task Goal Tracker</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-title">FocusPulse</div>
+      </div>
+      <div class="header-actions">
+        <div class="stats-pill" title="Current Daily Streak">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.316.492-.633 1.134-1.025 1.918-.752 1.503-1.688 3.376-2.85 5.701a1 1 0 00.324 1.258 4.975 4.975 0 002.595.733c.092 0 .184-.003.276-.01l-.226.791a1 1 0 001.27 1.218c.95-.317 1.764-.932 2.388-1.748.625-.816.99-1.81.99-2.87 0-.306-.03-.608-.088-.9a1 1 0 00-1.011-.806 4.945 4.945 0 00-.77.061c-.08-.344-.15-.7-.215-1.066a21.43 21.43 0 01-.194-1.282c-.066-.543-.112-1.068-.112-1.504 0-.34.028-.636.082-.87.054-.233.15-.436.27-.6z" clip-rule="evenodd"></path></svg>
+          <span id="header-streak">1 Day Streak</span>
+        </div>
+        <button id="sound-toggle" class="btn btn-secondary btn-icon" title="Toggle Sound (M)">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        </button>
+        <button id="theme-toggle" class="btn btn-secondary btn-icon" title="Toggle Dark/Light Mode">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <button id="btn-open-settings" class="btn btn-secondary btn-icon" title="Settings">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-layout">
+    <!-- Left Column: Master Timer Card -->
+    <section class="card timer-container">
+      <!-- Mode Selection Tabs -->
+      <div class="timer-mode-selector">
+        <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-btn" data-mode="short_break">Short Break</button>
+        <button class="mode-btn" data-mode="long_break">Long Break</button>
+        <button class="mode-btn" data-mode="countdown">Countdown</button>
+        <button class="mode-btn" data-mode="stopwatch">Stopwatch</button>
+      </div>
+
+      <!-- Active Task Banner -->
+      <div id="active-task-banner" class="active-task-banner">
+        <span>🎯 Active:</span>
+        <span id="active-task-name" class="task-label">Deep Coding & Architecture</span>
+      </div>
+
+      <!-- Radial Dial Progress Timer -->
+      <div class="timer-dial-wrapper">
+        <svg class="timer-svg" viewBox="0 0 280 280">
+          <circle class="timer-circle-bg" cx="140" cy="140" r="130"></circle>
+          <circle id="timer-circle-progress" class="timer-circle-progress" cx="140" cy="140" r="130"></circle>
+        </svg>
+        <div class="timer-inner-content">
+          <div id="timer-digits" class="timer-digits">25:00</div>
+          <div id="timer-sublabel" class="timer-sublabel">Pomodoro Focus</div>
+        </div>
+      </div>
+
+      <!-- Primary Controls -->
+      <div class="timer-controls">
+        <button id="btn-reset" class="btn btn-secondary btn-icon" title="Reset (R)">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+        <button id="btn-start-pause" class="btn btn-primary btn-large">
+          <span id="btn-start-pause-text">Start</span>
+        </button>
+        <button id="btn-skip" class="btn btn-secondary btn-icon" title="Skip Interval (S)">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+
+      <div class="timer-keyboard-hint">
+        Shortcuts: <span class="kbd">Space</span> Start/Pause &bull; <span class="kbd">R</span> Reset &bull; <span class="kbd">S</span> Skip &bull; <span class="kbd">N</span> New Task
+      </div>
+    </section>
+
+    <!-- Right Column: Goals, Analytics, and Session Log -->
+    <div class="tasks-container">
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-summary-grid">
+        <div class="metric-box">
+          <span class="metric-label">Focus Today</span>
+          <span id="metric-focus-hours" class="metric-value">0.0h</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Pomodoros</span>
+          <span id="metric-pomodoros" class="metric-value">0</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Daily Goal</span>
+          <span id="metric-goal-progress" class="metric-value">0%</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Day Streak</span>
+          <span id="metric-streak" class="metric-value">1d</span>
+        </div>
+      </div>
+
+      <!-- Task Goals Card -->
+      <section class="card">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Task Goals & Progress
+          </h2>
+          <button id="btn-open-add-task" class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
+            + New Task
+          </button>
+        </div>
+        <div id="task-list" class="task-list">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </section>
+
+      <!-- Analytics & Trends Card -->
+      <section class="card">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Productivity Insights
+          </h2>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <span class="chart-title">7-Day Focus Trend</span>
+            <canvas id="chart-7day" class="chart-canvas" height="190"></canvas>
+          </div>
+          <div class="chart-card">
+            <span class="chart-title">Time Allocation by Task</span>
+            <canvas id="chart-distribution" class="chart-canvas" height="190"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- History & Data Management Card -->
+      <section class="card">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Recent Sessions Log
+          </h2>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="btn-export-csv" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+              Export CSV
+            </button>
+            <button id="btn-export-json" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">
+              Backup (JSON)
+            </button>
+            <label class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer;">
+              Restore
+              <input type="file" id="file-import-json" accept=".json" style="display: none;">
+            </label>
+            <button id="btn-clear-history" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; color: var(--color-danger);">
+              Clear
+            </button>
+          </div>
+        </div>
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Category</th>
+                <th>Duration</th>
+                <th>Completed At</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Create / Edit Task Modal -->
+  <div id="task-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="task-modal-title" class="modal-title">Create New Task Goal</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="task-form">
+        <input type="hidden" id="task-id-input">
+        <div class="form-group">
+          <label class="form-label" for="task-title">Task Name</label>
+          <input type="text" id="task-title" class="form-input" placeholder="e.g. System Design, Bug Bash..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="task-tag">Category / Tag</label>
+          <input type="text" id="task-tag" class="form-input" placeholder="e.g. Development, Study, Writing" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="task-goal-minutes">Target Goal (Minutes)</label>
+            <input type="number" id="task-goal-minutes" class="form-input" min="5" max="1440" value="60" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="task-goal-period">Goal Period</label>
+            <select id="task-goal-period" class="form-select">
+              <option value="daily">Daily Goal</option>
+              <option value="weekly">Weekly Goal</option>
+              <option value="total">Total Project Goal</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Theme Color</label>
+          <div class="color-swatches">
+            <label>
+              <input type="radio" name="task-color" value="#4f46e5" class="color-swatch-radio" checked>
+              <span class="color-swatch-label" style="background-color: #4f46e5;"></span>
+            </label>
+            <label>
+              <input type="radio" name="task-color" value="#06b6d4" class="color-swatch-radio">
+              <span class="color-swatch-label" style="background-color: #06b6d4;"></span>
+            </label>
+            <label>
+              <input type="radio" name="task-color" value="#10b981" class="color-swatch-radio">
+              <span class="color-swatch-label" style="background-color: #10b981;"></span>
+            </label>
+            <label>
+              <input type="radio" name="task-color" value="#f59e0b" class="color-swatch-radio">
+              <span class="color-swatch-label" style="background-color: #f59e0b;"></span>
+            </label>
+            <label>
+              <input type="radio" name="task-color" value="#ec4899" class="color-swatch-radio">
+              <span class="color-swatch-label" style="background-color: #ec4899;"></span>
+            </label>
+            <label>
+              <input type="radio" name="task-color" value="#8b5cf6" class="color-swatch-radio">
+              <span class="color-swatch-label" style="background-color: #8b5cf6;"></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Timer & Audio Settings</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="settings-form">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="setting-pomodoro">Focus Duration (min)</label>
+            <input type="number" id="setting-pomodoro" class="form-input" min="1" max="180" value="25">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="setting-short-break">Short Break (min)</label>
+            <input type="number" id="setting-short-break" class="form-input" min="1" max="60" value="5">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="setting-long-break">Long Break (min)</label>
+            <input type="number" id="setting-long-break" class="form-input" min="1" max="90" value="15">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="setting-long-break-interval">Long Break Every</label>
+            <input type="number" id="setting-long-break-interval" class="form-input" min="1" max="12" value="4">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="setting-sound">Completion Sound</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="setting-sound" class="form-select" style="flex: 1;">
+              <option value="chime">Melodic Chime</option>
+              <option value="bell">Tibetan Bell</option>
+              <option value="digital">Digital Beep</option>
+            </select>
+            <button type="button" id="btn-test-sound" class="btn btn-secondary" style="font-size: 0.85rem;">Test</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="setting-volume">Sound Volume</label>
+          <input type="range" id="setting-volume" min="0" max="1" step="0.05" value="0.7" style="width: 100%;">
+        </div>
+        <div class="form-group" style="gap: 0.5rem; margin-top: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+            <input type="checkbox" id="setting-auto-breaks">
+            Auto-start break intervals
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+            <input type="checkbox" id="setting-auto-pomos">
+            Auto-start focus after break
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+            <input type="checkbox" id="setting-notifications">
+            Enable desktop push notifications
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Core Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

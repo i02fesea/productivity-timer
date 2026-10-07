@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FocusPulse - Automated Test Suite</title>
+  <!-- Link core design styles for layout testing -->
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: 1rem; color: #818cf8; }
+    .summary { font-size: 1.1rem; font-weight: bold; margin-bottom: 1.5rem; padding: 0.75rem 1rem; border-radius: 8px; }
+    .summary.pass { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .summary.fail { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .test-case { background: #1e293b; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .badge { font-size: 0.8rem; font-weight: bold; padding: 0.2rem 0.6rem; border-radius: 9999px; }
+    .badge.pass { background: #065f46; color: #6ee7b7; }
+    .badge.fail { background: #7f1d1d; color: #fca5a5; }
+    .details { font-size: 0.85rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ FocusPulse Automated Test Suite</h1>
+    <div id="test-summary" class="summary">Running tests...</div>
+    <div id="test-results"></div>
+    <canvas id="test-canvas-1" width="300" height="200" style="display:none;"></canvas>
+    <canvas id="test-canvas-2" width="300" height="200" style="display:none;"></canvas>
+
+    <!-- Test Fixture Container for Layout & Mode Selector Overflow Verification -->
+    <div id="test-fixture-wrapper" style="width: 480px; margin: 1.5rem 0; display: block;">
+      <div class="timer-mode-selector" id="test-mode-selector">
+        <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-btn" data-mode="short_break">Short Break</button>
+        <button class="mode-btn" data-mode="long_break">Long Break</button>
+        <button class="mode-btn" data-mode="countdown">Countdown</button>
+        <button class="mode-btn" data-mode="stopwatch">Stopwatch</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/analytics.js"></script>
+
+  <script>
+    const resultsContainer = document.getElementById('test-results');
+    const summaryEl = document.getElementById('test-summary');
+    let passed = 0;
+    let failed = 0;
+
+    function assert(condition, testName, details = '') {
+      const row = document.createElement('div');
+      row.className = 'test-case';
+      if (condition) {
+        passed++;
+        row.innerHTML = `
+          <div><strong>${testName}</strong> ${details ? `<div class="details">${details}</div>` : ''}</div>
+          <span class="badge pass">PASS</span>
+        `;
+      } else {
+        failed++;
+        row.innerHTML = `
+          <div><strong>${testName}</strong> ${details ? `<div class="details" style="color: #f87171;">FAIL: ${details}</div>` : ''}</div>
+          <span class="badge fail">FAIL</span>
+        `;
+        console.error(`[FAIL] ${testName}: ${details}`);
+      }
+      resultsContainer.appendChild(row);
+    }
+
+    async function runTestSuite() {
+      console.log('Starting automated tests...');
+
+      // --- 1. StorageService Tests ---
+      assert(typeof window.storageService !== 'undefined', 'StorageService: initialized properly');
+      
+      const tasks = window.storageService.getTasks();
+      assert(Array.isArray(tasks) && tasks.length > 0, 'StorageService: seeded default tasks', `Found ${tasks.length} default tasks`);
+
+      const initialCount = tasks.length;
+      const testTaskId = 'test_task_' + Date.now();
+      window.storageService.upsertTask({
+        id: testTaskId,
+        title: 'Automated Test Task',
+        tag: 'Testing',
+        goalMinutes: 45,
+        goalPeriod: 'daily',
+        color: '#10b981',
+        spentSeconds: 0
+      });
+      const updatedTasks = window.storageService.getTasks();
+      assert(updatedTasks.length === initialCount + 1, 'StorageService: upsertTask created new task');
+
+      window.storageService.incrementTaskSpentTime(testTaskId, 300);
+      const fetchedTask = window.storageService.getTaskById(testTaskId);
+      assert(fetchedTask && fetchedTask.spentSeconds === 300, 'StorageService: incrementTaskSpentTime works accurately', `Spent: ${fetchedTask?.spentSeconds}s`);
+
+      window.storageService.deleteTask(testTaskId);
+      const afterDeleteTasks = window.storageService.getTasks();
+      assert(!afterDeleteTasks.find(t => t.id === testTaskId), 'StorageService: deleteTask removed task cleanly');
+
+      const settings = window.storageService.getSettings();
+      assert(settings && typeof settings.pomodoroMinutes === 'number', 'StorageService: settings loaded with pomodoro defaults', `pomodoroMinutes: ${settings.pomodoroMinutes}`);
+
+      // --- 2. PrecisionTimer Tests ---
+      assert(typeof window.precisionTimer !== 'undefined', 'PrecisionTimer: initialized properly');
+
+      window.precisionTimer.setMode('pomodoro');
+      assert(window.precisionTimer.remainingSeconds === 25 * 60, 'PrecisionTimer: Pomodoro defaults to 25 minutes (1500s)', `Remaining: ${window.precisionTimer.remainingSeconds}s`);
+
+      window.precisionTimer.setMode('short_break');
+      assert(window.precisionTimer.remainingSeconds === 5 * 60, 'PrecisionTimer: Short Break sets 5 minutes (300s)', `Remaining: ${window.precisionTimer.remainingSeconds}s`);
+
+      window.precisionTimer.setMode('countdown', 45 * 60);
+      assert(window.precisionTimer.remainingSeconds === 45 * 60, 'PrecisionTimer: Custom Countdown sets 45 minutes (2700s)', `Remaining: ${window.precisionTimer.remainingSeconds}s`);
+
+      window.precisionTimer.setMode('stopwatch');
+      assert(window.precisionTimer.remainingSeconds === 0, 'PrecisionTimer: Stopwatch mode starts at 0s');
+
+      const formatted1 = window.precisionTimer.formatTime(1500);
+      assert(formatted1 === '25:00', 'PrecisionTimer: formatTime formats MM:SS correctly', `Got: ${formatted1}`);
+
+      const formatted2 = window.precisionTimer.formatTime(3665);
+      assert(formatted2 === '01:01:05', 'PrecisionTimer: formatTime formats HH:MM:SS correctly', `Got: ${formatted2}`);
+
+      // Test Start, Pause, Reset state machine
+      window.precisionTimer.setMode('pomodoro');
+      window.precisionTimer.start();
+      assert(window.precisionTimer.state === 'running', 'PrecisionTimer: start() transitions state to running');
+
+      window.precisionTimer.pause();
+      assert(window.precisionTimer.state === 'paused', 'PrecisionTimer: pause() transitions state to paused');
+
+      window.precisionTimer.reset();
+      assert(window.precisionTimer.state === 'idle' && window.precisionTimer.remainingSeconds === 25 * 60, 'PrecisionTimer: reset() returns state to idle with 1500s remaining');
+
+      // --- 3. AnalyticsEngine Tests ---
+      assert(typeof window.analyticsEngine !== 'undefined', 'AnalyticsEngine: initialized properly');
+
+      const metrics = window.analyticsEngine.getTodayMetrics();
+      assert(typeof metrics.todayHours === 'string' && typeof metrics.goalProgressPct === 'number', 'AnalyticsEngine: getTodayMetrics returns valid payload', `Today hours: ${metrics.todayHours}h, Goal: ${metrics.goalProgressPct}%`);
+
+      const testSessions = [
+        { id: '1', timestamp: new Date().toISOString(), durationSeconds: 1500 },
+        { id: '2', timestamp: new Date(Date.now() - 86400000).toISOString(), durationSeconds: 1500 },
+        { id: '3', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), durationSeconds: 1500 }
+      ];
+      const streak = window.analyticsEngine.calculateStreak(testSessions);
+      assert(streak >= 2, 'AnalyticsEngine: calculateStreak computes multi-day consecutive streak', `Streak: ${streak} days`);
+
+      // Canvas chart render check
+      let canvasErrors = false;
+      try {
+        const c1 = document.getElementById('test-canvas-1');
+        const c2 = document.getElementById('test-canvas-2');
+        window.analyticsEngine.render7DayTrend(c1);
+        window.analyticsEngine.renderTaskDistribution(c2);
+      } catch (err) {
+        canvasErrors = true;
+        console.error('Canvas error:', err);
+      }
+      assert(!canvasErrors, 'AnalyticsEngine: Canvas 7-Day Trend & Doughnut Charts render without errors');
+
+      // --- 4. SoundEffects Tests ---
+      assert(typeof window.soundEffects !== 'undefined', 'SoundEffects: initialized properly');
+      window.soundEffects.setMuted(true);
+      assert(window.soundEffects.muted === true, 'SoundEffects: setMuted successfully mutes audio');
+      window.soundEffects.setMuted(false);
+      window.soundEffects.setVolume(0.5);
+      assert(window.soundEffects.volume === 0.5, 'SoundEffects: setVolume sets volume level properly');
+
+      // --- 5. UI Layout & Mode Selector Overflow Tests ---
+      // Retrieve test selector and buttons from DOM fixture
+      const testSelector = document.getElementById('test-mode-selector');
+      const testBtns = testSelector.querySelectorAll('.mode-btn');
+
+      // Test 5.1: Verify all 5 mode buttons are present in the DOM
+      assert(testBtns.length === 5, 'UI Mode Selector: contains all 5 mode buttons (Pomodoro, Short Break, Long Break, Countdown, Stopwatch)');
+
+      // Test 5.2: Verify each button matches the expected data-mode identifiers
+      const expectedModes = ['pomodoro', 'short_break', 'long_break', 'countdown', 'stopwatch'];
+      const actualModes = Array.from(testBtns).map(b => b.getAttribute('data-mode'));
+      const hasAllModes = expectedModes.every(m => actualModes.includes(m));
+      assert(hasAllModes, 'UI Mode Selector: all expected timer modes are correctly defined in data-mode');
+
+      // Test 5.3: Verify all 5 buttons fit inside the pill visualization container without horizontal overflow
+      // In CSS, an element overflows if scrollWidth > clientWidth
+      const isContained = testSelector.scrollWidth <= testSelector.clientWidth + 2; // Allow minor sub-pixel rendering tolerance
+      assert(isContained, 'UI Mode Selector: all buttons fit inside visualization pill without overflowing', `Selector clientWidth: ${testSelector.clientWidth}px, scrollWidth: ${testSelector.scrollWidth}px`);
+
+      // Test 5.4: Verify all buttons maintain clean single-line nowrap alignment
+      const nonWrapping = Array.from(testBtns).every(btn => {
+        const style = window.getComputedStyle(btn);
+        return style.whiteSpace === 'nowrap';
+      });
+      assert(nonWrapping, 'UI Mode Selector: all buttons preserve single-line nowrap styling to prevent awkward line breaks');
+
+      // Final summary
+      if (failed === 0) {
+        summaryEl.className = 'summary pass';
+        summaryEl.textContent = `All ${passed} tests passed successfully! Application is fully operational.`;
+      } else {
+        summaryEl.className = 'summary fail';
+        summaryEl.textContent = `${failed} test(s) failed out of ${passed + failed}.`;
+      }
+
+      console.log(`Test run completed: ${passed} passed, ${failed} failed.`);
+    }
+
+    window.addEventListener('DOMContentLoaded', runTestSuite);
+  </script>
+</body>
+</html>
